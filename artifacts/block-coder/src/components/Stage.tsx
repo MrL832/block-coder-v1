@@ -53,7 +53,7 @@ function drawBackground(ctx: CanvasRenderingContext2D) {
   }
 }
 
-function drawCat(
+function drawDog(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
@@ -65,138 +65,137 @@ function drawCat(
   const rot = ((direction - 90) * Math.PI) / 180;
   ctx.rotate(rot);
 
-  const hueShift = colorEffect;
+  const h = colorEffect;
+  const fur = `hsl(${34 + h}, 85%, 62%)`;
+  const furDark = `hsl(${28 + h}, 75%, 42%)`;
+  const furLight = `hsl(${40 + h}, 70%, 82%)`;
+  const earInner = `hsl(${15 + h}, 70%, 72%)`;
 
-  const bodyColor = `hsl(${28 + hueShift}, 90%, 65%)`;
-  const darkColor = `hsl(${28 + hueShift}, 80%, 45%)`;
-  const lightColor = `hsl(${28 + hueShift}, 60%, 80%)`;
-
-  ctx.fillStyle = darkColor;
+  // --- tail (curled up behind body) ---
+  ctx.strokeStyle = fur;
+  ctx.lineWidth = 7;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-16, -28);
-  ctx.lineTo(-12, -20);
-  ctx.lineTo(-20, -18);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(0, 14);
+  ctx.bezierCurveTo(26, 18, 34, 4, 22, -4);
+  ctx.bezierCurveTo(14, -10, 8, -4, 14, 2);
+  ctx.stroke();
+  ctx.lineWidth = 1;
 
+  // --- body ---
+  ctx.fillStyle = fur;
   ctx.beginPath();
-  ctx.moveTo(16, -28);
-  ctx.lineTo(12, -20);
-  ctx.lineTo(20, -18);
-  ctx.closePath();
+  ctx.ellipse(0, 12, 17, 22, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = `hsl(${340 + hueShift}, 60%, 75%)`;
-  ctx.beginPath();
-  ctx.moveTo(-14, -26);
-  ctx.lineTo(-12, -21);
-  ctx.lineTo(-17, -20);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(14, -26);
-  ctx.lineTo(12, -21);
-  ctx.lineTo(17, -20);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath();
-  ctx.arc(0, -10, 22, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = darkColor;
+  ctx.strokeStyle = furDark;
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  ctx.fillStyle = lightColor;
+  // belly patch
+  ctx.fillStyle = furLight;
   ctx.beginPath();
-  ctx.ellipse(0, -6, 12, 9, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 12, 9, 14, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#2D1B00";
-  ctx.beginPath();
-  ctx.arc(-7, -14, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(7, -14, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#7BE0FF";
-  ctx.beginPath();
-  ctx.arc(-7, -14, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(7, -14, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(-6.5, -14.5, 1, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(7.5, -14.5, 1, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = `hsl(${340 + hueShift}, 60%, 75%)`;
-  ctx.beginPath();
-  ctx.arc(0, -8, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = darkColor;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(0, -4, 6, 0, Math.PI);
-  ctx.stroke();
-
-  ctx.strokeStyle = darkColor;
-  ctx.lineWidth = 1;
+  // --- front legs ---
   for (const side of [-1, 1]) {
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(side * 4, -8 + i * 3);
-      ctx.lineTo(side * 18, -10 + i * 2.5);
-      ctx.stroke();
-    }
-  }
-
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath();
-  ctx.ellipse(0, 10, 18, 24, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = darkColor;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  ctx.fillStyle = lightColor;
-  ctx.beginPath();
-  ctx.ellipse(0, 10, 10, 16, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  for (const side of [-1, 1]) {
-    ctx.fillStyle = bodyColor;
+    ctx.fillStyle = fur;
     ctx.beginPath();
-    ctx.ellipse(side * 18, 5, 8, 14, side * 0.3, 0, Math.PI * 2);
+    ctx.ellipse(side * 13, 26, 5, 9, side * 0.15, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = darkColor;
+    ctx.strokeStyle = furDark;
     ctx.lineWidth = 1;
     ctx.stroke();
+    // paw
+    ctx.fillStyle = furLight;
+    ctx.beginPath();
+    ctx.ellipse(side * 13, 34, 5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  ctx.fillStyle = bodyColor;
+  // --- floppy ears (drawn before head so head overlaps) ---
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = furDark;
+    ctx.beginPath();
+    ctx.ellipse(side * 17, -8, 8, 13, side * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    // inner ear
+    ctx.fillStyle = earInner;
+    ctx.beginPath();
+    ctx.ellipse(side * 17, -7, 5, 9, side * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- head ---
+  ctx.fillStyle = fur;
   ctx.beginPath();
-  ctx.moveTo(-4, 30);
-  ctx.bezierCurveTo(-6, 42, -4, 48, -2, 50);
-  ctx.bezierCurveTo(-1, 52, 1, 52, 2, 50);
-  ctx.bezierCurveTo(4, 48, 6, 42, 4, 30);
-  ctx.closePath();
+  ctx.arc(0, -10, 20, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = darkColor;
+  ctx.strokeStyle = furDark;
   ctx.lineWidth = 1;
   ctx.stroke();
+
+  // --- snout ---
+  ctx.fillStyle = furLight;
+  ctx.beginPath();
+  ctx.ellipse(0, -4, 10, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = furDark;
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+
+  // nose
+  ctx.fillStyle = "#2D1B00";
+  ctx.beginPath();
+  ctx.ellipse(0, -7, 4, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // nostril highlights
+  ctx.fillStyle = "rgba(255,255,255,0.3)";
+  ctx.beginPath();
+  ctx.arc(-1.5, -8, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // mouth
+  ctx.strokeStyle = furDark;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(0, -4);
+  ctx.lineTo(0, -1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(-4, -1, 4, 0, Math.PI * 0.7);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(4, -1, 4, Math.PI * 0.3, Math.PI);
+  ctx.stroke();
+
+  // --- eyes ---
+  for (const side of [-1, 1]) {
+    // white sclera
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(side * 8, -16, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    // iris
+    ctx.fillStyle = "#3D2000";
+    ctx.beginPath();
+    ctx.arc(side * 8, -16, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // pupil shine
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.beginPath();
+    ctx.arc(side * 8 + 1, -17, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // eyebrow dots (expressive)
+  ctx.fillStyle = furDark;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(side * 8, -22, 4, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   ctx.restore();
 }
@@ -251,7 +250,7 @@ export function Stage({ spriteState }: StageProps) {
 
     if (spriteState.visible) {
       const { cx, cy } = stageToCanvas(spriteState.x, spriteState.y);
-      drawCat(ctx, cx, cy, spriteState.direction, spriteState.colorEffect);
+      drawDog(ctx, cx, cy, spriteState.direction, spriteState.colorEffect);
 
       if (spriteState.speech) {
         drawSpeechBubble(ctx, cx, cy - 10, spriteState.speech);

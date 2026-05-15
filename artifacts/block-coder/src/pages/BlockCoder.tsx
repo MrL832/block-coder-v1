@@ -64,7 +64,7 @@ export default function BlockCoder() {
           <h1 className="text-xl font-black text-gray-800 tracking-tight">Block Coder</h1>
         </div>
         <p className="ml-4 text-sm text-gray-400 font-semibold hidden md:block">
-          Snap blocks together to make the cat move!
+          Snap blocks together to make the dog move!
         </p>
         <div className="ml-auto flex items-center gap-1 text-xs text-gray-400 font-semibold">
           <span className="w-2 h-2 rounded-full" style={{ background: "#59C059" }} />
