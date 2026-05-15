@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { Trash2 } from "lucide-react";
 import { BlockDef, BlockInstance, BLOCK_CATALOG, CATEGORY_COLORS } from "@/types/blocks";
 import { ScriptArea } from "@/components/ScriptArea";
@@ -91,8 +90,7 @@ export function BlockComponent({
         style={{
           background: color,
           boxShadow: `0 3px 0 ${adjustColor(color, -30)}, 0 2px 6px rgba(0,0,0,0.2)`,
-          cursor: isPaletteItem ? "grab" : "grab",
-          marginBottom: def.hasInner ? 0 : 0,
+          cursor: "grab",
         }}
       >
         {isFirstBlock && (
@@ -126,13 +124,18 @@ export function BlockComponent({
                 <select
                   key={i}
                   value={String(currentValue)}
+                  disabled={isPaletteItem}
                   onChange={(e) =>
                     !isPaletteItem && onValueChange && onValueChange(inputDef.name, e.target.value)
                   }
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
-                  readOnly={isPaletteItem}
-                  style={{ ...inputStyle, cursor: "pointer", minWidth: "80px" }}
+                  style={{
+                    ...inputStyle,
+                    cursor: isPaletteItem ? "default" : "pointer",
+                    minWidth: "80px",
+                    opacity: isPaletteItem ? 0.8 : 1,
+                  }}
                 >
                   {inputDef.options?.map((opt) => (
                     <option key={opt} value={opt}>
@@ -153,7 +156,8 @@ export function BlockComponent({
                 value={strVal}
                 onChange={(e) => {
                   if (!isPaletteItem && onValueChange) {
-                    const val = inputDef.type === "number" ? Number(e.target.value) : e.target.value;
+                    const val =
+                      inputDef.type === "number" ? Number(e.target.value) : e.target.value;
                     onValueChange(inputDef.name, val);
                   }
                 }}
@@ -172,26 +176,18 @@ export function BlockComponent({
               e.stopPropagation();
               onDelete();
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity px-2 flex items-center text-white/70 hover:text-white"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                onDelete();
+              }
+            }}
+            className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity px-2 flex items-center text-white/70 hover:text-white"
             title="Delete block"
+            aria-label="Delete block"
           >
             <Trash2 size={14} />
           </button>
-        )}
-
-        {!def.hasInner && !isFirstBlock && (
-          <svg
-            width="100%"
-            height="8"
-            viewBox="0 0 120 8"
-            className="absolute -bottom-2 left-0"
-            style={{ pointerEvents: "none" }}
-          >
-            <path
-              d="M0,0 L30,0 L30,8 L40,8 L40,0 L120,0"
-              fill={color}
-            />
-          </svg>
         )}
       </div>
 
@@ -221,7 +217,6 @@ export function BlockComponent({
             height: "10px",
             borderRadius: "0 0 6px 6px",
             boxShadow: `0 3px 0 ${adjustColor(color, -30)}`,
-            marginTop: 0,
           }}
         />
       )}
