@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Block Coder"
+version = "1.0.0"
+id = "artifacts/block-coder"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22952
+
+[services.development]
+run = "pnpm --filter @workspace/block-coder run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/block-coder", "run", "build" ]
+publicDir = "artifacts/block-coder/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22952"
+BASE_PATH = "/"
