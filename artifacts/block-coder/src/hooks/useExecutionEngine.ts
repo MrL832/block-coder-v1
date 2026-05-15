@@ -143,7 +143,18 @@ export function useExecutionEngine() {
         }
 
         case "control_if": {
-          await executeBlocks(block.children ?? []);
+          const condition = String(v.condition ?? "always true");
+          const s = spriteRef.current;
+          let result = false;
+          if (condition === "x > 0") result = s.x > 0;
+          else if (condition === "x < 0") result = s.x < 0;
+          else if (condition === "y > 0") result = s.y > 0;
+          else if (condition === "y < 0") result = s.y < 0;
+          else if (condition === "touching edge")
+            result = Math.abs(s.x) >= 220 || Math.abs(s.y) >= 160;
+          else if (condition === "always true") result = true;
+          else if (condition === "always false") result = false;
+          if (result) await executeBlocks(block.children ?? []);
           break;
         }
 
@@ -198,9 +209,10 @@ export function useExecutionEngine() {
 
   const stopExecution = useCallback(() => {
     abortRef.current = true;
+    spriteRef.current = { ...INITIAL_SPRITE };
+    setSpriteState({ ...INITIAL_SPRITE });
     setIsRunning(false);
-    updateSprite((s) => ({ ...s, speech: null }));
-  }, [updateSprite]);
+  }, []);
 
   const resetSprite = useCallback(() => {
     abortRef.current = true;

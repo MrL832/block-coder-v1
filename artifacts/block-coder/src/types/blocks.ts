@@ -138,8 +138,24 @@ export const BLOCK_CATALOG: BlockDef[] = [
   {
     type: "control_if",
     category: "Control",
-    label: "If true then",
+    label: "If {condition} then",
     hasInner: true,
+    inputs: [
+      {
+        name: "condition",
+        type: "dropdown",
+        defaultValue: "x > 0",
+        options: [
+          "x > 0",
+          "x < 0",
+          "y > 0",
+          "y < 0",
+          "touching edge",
+          "always true",
+          "always false",
+        ],
+      },
+    ],
   },
   {
     type: "control_stop",
