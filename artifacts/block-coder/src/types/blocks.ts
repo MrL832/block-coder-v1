@@ -2,8 +2,7 @@ export type BlockCategory =
   | "Motion"
   | "Looks"
   | "Events"
-  | "Control"
-  | "Operators";
+  | "Control";
 
 export type BlockType =
   | "event_whenflagclicked"
@@ -16,8 +15,7 @@ export type BlockType =
   | "control_waitsecs"
   | "control_repeat"
   | "control_if"
-  | "control_stop"
-  | "operator_waitforever";
+  | "control_stop";
 
 export interface BlockDef {
   type: BlockType;
@@ -55,7 +53,6 @@ export const CATEGORY_COLORS: Record<BlockCategory, string> = {
   Looks: "#9966FF",
   Events: "#FFAB19",
   Control: "#FF8C1A",
-  Operators: "#59C059",
 };
 
 export const BLOCK_CATALOG: BlockDef[] = [
@@ -165,11 +162,5 @@ export const BLOCK_CATALOG: BlockDef[] = [
         options: ["all", "this script"],
       },
     ],
-  },
-  {
-    type: "operator_waitforever",
-    category: "Operators",
-    label: "Wait forever (loop)",
-    hasInner: true,
   },
 ];

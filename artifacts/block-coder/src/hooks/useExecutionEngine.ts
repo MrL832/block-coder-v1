@@ -158,17 +158,6 @@ export function useExecutionEngine() {
           break;
         }
 
-        case "operator_waitforever": {
-          while (!abortRef.current) {
-            if ((block.children ?? []).length === 0) {
-              await sleep(100);
-            } else {
-              await executeBlocks(block.children ?? []);
-            }
-          }
-          break;
-        }
-
         case "control_stop": {
           abortRef.current = true;
           return;

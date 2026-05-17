@@ -12,7 +12,6 @@ const CATEGORIES: BlockCategory[] = [
   "Motion",
   "Looks",
   "Control",
-  "Operators",
 ];
 
 function adjustColor(hex: string, amount: number): string {
