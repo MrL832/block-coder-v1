@@ -1,11 +1,9 @@
 export type BlockCategory =
   | "Motion"
   | "Looks"
-  | "Sound"
   | "Events"
   | "Control"
-  | "Operators"
-  | "Variables";
+  | "Operators";
 
 export type BlockType =
   | "event_whenflagclicked"
@@ -55,11 +53,9 @@ export interface SpriteState {
 export const CATEGORY_COLORS: Record<BlockCategory, string> = {
   Motion: "#4C97FF",
   Looks: "#9966FF",
-  Sound: "#CF63CF",
   Events: "#FFAB19",
   Control: "#FF8C1A",
   Operators: "#59C059",
-  Variables: "#FF8C1A",
 };
 
 export const BLOCK_CATALOG: BlockDef[] = [

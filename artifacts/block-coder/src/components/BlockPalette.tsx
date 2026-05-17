@@ -13,8 +13,6 @@ const CATEGORIES: BlockCategory[] = [
   "Looks",
   "Control",
   "Operators",
-  "Variables",
-  "Sound",
 ];
 
 function adjustColor(hex: string, amount: number): string {
