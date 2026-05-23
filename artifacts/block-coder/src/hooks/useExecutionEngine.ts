@@ -13,6 +13,7 @@ const INITIAL_SPRITE: SpriteState = {
 export function useExecutionEngine() {
   const [spriteState, setSpriteState] = useState<SpriteState>({ ...INITIAL_SPRITE });
   const [isRunning, setIsRunning] = useState(false);
+  const isRunningRef = useRef(false);
   const abortRef = useRef(false);
   const spriteRef = useRef<SpriteState>({ ...INITIAL_SPRITE });
 
@@ -173,7 +174,8 @@ export function useExecutionEngine() {
 
   const runScript = useCallback(
     async (blocks: BlockInstance[]) => {
-      if (isRunning) return;
+      if (isRunningRef.current) return;
+      isRunningRef.current = true;
       abortRef.current = false;
       spriteRef.current = { ...INITIAL_SPRITE };
       setSpriteState({ ...INITIAL_SPRITE });
@@ -181,6 +183,7 @@ export function useExecutionEngine() {
 
       const flagBlock = blocks.find((b) => b.type === "event_whenflagclicked");
       if (!flagBlock) {
+        isRunningRef.current = false;
         setIsRunning(false);
         return;
       }
@@ -192,14 +195,16 @@ export function useExecutionEngine() {
         await executeBlocks(toRun);
       } catch {
       } finally {
+        isRunningRef.current = false;
         setIsRunning(false);
       }
     },
-    [isRunning]
+    []
   );
 
   const stopExecution = useCallback(() => {
     abortRef.current = true;
+    isRunningRef.current = false;
     spriteRef.current = { ...INITIAL_SPRITE };
     setSpriteState({ ...INITIAL_SPRITE });
     setIsRunning(false);
@@ -207,6 +212,7 @@ export function useExecutionEngine() {
 
   const resetSprite = useCallback(() => {
     abortRef.current = true;
+    isRunningRef.current = false;
     spriteRef.current = { ...INITIAL_SPRITE };
     setSpriteState({ ...INITIAL_SPRITE });
     setIsRunning(false);
