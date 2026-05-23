@@ -38,6 +38,7 @@ function PaletteBlock({ def, onAdd }: PaletteBlockProps) {
   const labelText = def.label.replace(/\{[^}]+\}/g, (match) => {
     const name = match.slice(1, -1);
     const inp = def.inputs?.find((i) => i.name === name);
+    if (inp?.type === "direction") return inp.defaultValue === "counterclockwise" ? "↺" : "↻";
     return String(inp?.defaultValue ?? "...");
   });
 
