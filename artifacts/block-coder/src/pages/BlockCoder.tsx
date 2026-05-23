@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -9,7 +9,7 @@ import { ScriptArea } from "@/components/ScriptArea";
 import { Stage } from "@/components/Stage";
 import { useExecutionEngine } from "@/hooks/useExecutionEngine";
 import { BlockDef, BlockInstance, BLOCK_CATALOG } from "@/types/blocks";
-import { Play, Square, RotateCcw } from "lucide-react";
+import { Play, Square, RotateCcw, Undo2, Redo2 } from "lucide-react";
 
 let idCounter = 1;
 function makeId() {
@@ -29,10 +29,58 @@ function createInstanceFromDef(def: BlockDef): BlockInstance {
   };
 }
 
+const MAX_HISTORY = 50;
+
+function useScriptHistory() {
+  const pastRef = useRef<BlockInstance[][]>([]);
+  const futureRef = useRef<BlockInstance[][]>([]);
+  const [present, setPresent] = useState<BlockInstance[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const sync = () => {
+    setCanUndo(pastRef.current.length > 0);
+    setCanRedo(futureRef.current.length > 0);
+  };
+
+  const set = useCallback((next: BlockInstance[] | ((p: BlockInstance[]) => BlockInstance[])) => {
+    setPresent((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      pastRef.current = [...pastRef.current.slice(-(MAX_HISTORY - 1)), prev];
+      futureRef.current = [];
+      sync();
+      return resolved;
+    });
+  }, []);
+
+  const undo = useCallback(() => {
+    if (pastRef.current.length === 0) return;
+    setPresent((prev) => {
+      const previous = pastRef.current[pastRef.current.length - 1];
+      pastRef.current = pastRef.current.slice(0, -1);
+      futureRef.current = [prev, ...futureRef.current];
+      sync();
+      return previous;
+    });
+  }, []);
+
+  const redo = useCallback(() => {
+    if (futureRef.current.length === 0) return;
+    setPresent((prev) => {
+      const next = futureRef.current[0];
+      futureRef.current = futureRef.current.slice(1);
+      pastRef.current = [...pastRef.current, prev];
+      sync();
+      return next;
+    });
+  }, []);
+
+  return { present, set, undo, redo, canUndo, canRedo };
+}
+
 export default function BlockCoder() {
-  const [scriptBlocks, setScriptBlocks] = useState<BlockInstance[]>([]);
-  const { spriteState, runScript, stopExecution, resetSprite, isRunning } =
-    useExecutionEngine();
+  const { present: scriptBlocks, set: setScriptBlocks, undo, redo, canUndo, canRedo } = useScriptHistory();
+  const { spriteState, runScript, stopExecution, resetSprite, isRunning } = useExecutionEngine();
 
   const handleRun = () => runScript(scriptBlocks);
   const handleStop = () => stopExecution();
@@ -40,13 +88,21 @@ export default function BlockCoder() {
 
   const hasFlag = scriptBlocks.some((b) => b.type === "event_whenflagclicked");
 
-  const handleAddBlock = useCallback(
-    (def: BlockDef) => {
-      const block = createInstanceFromDef(def);
-      setScriptBlocks((prev) => [...prev, block]);
-    },
-    []
-  );
+  const handleAddBlock = useCallback((def: BlockDef) => {
+    const block = createInstanceFromDef(def);
+    setScriptBlocks((prev) => [...prev, block]);
+  }, [setScriptBlocks]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (!ctrl) return;
+      if (e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if (e.key === "y" || (e.key === "z" && e.shiftKey)) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   return (
     <div
@@ -166,6 +222,28 @@ export default function BlockCoder() {
                     {scriptBlocks.length} block{scriptBlocks.length !== 1 ? "s" : ""}
                   </span>
                 )}
+
+                <div className="flex items-center gap-1 ml-1">
+                  <button
+                    onClick={undo}
+                    disabled={!canUndo}
+                    aria-label="Undo"
+                    title="Undo (Ctrl+Z)"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    <Undo2 size={14} />
+                  </button>
+                  <button
+                    onClick={redo}
+                    disabled={!canRedo}
+                    aria-label="Redo"
+                    title="Redo (Ctrl+Y)"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    <Redo2 size={14} />
+                  </button>
+                </div>
+
                 {scriptBlocks.length > 0 && (
                   <button
                     className="ml-auto text-xs text-gray-400 hover:text-red-500 font-semibold transition-colors focus:outline-none focus:text-red-500"
