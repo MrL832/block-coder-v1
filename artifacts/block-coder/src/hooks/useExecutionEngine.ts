@@ -91,8 +91,10 @@ export function useExecutionEngine() {
         }
 
         case "motion_turndegrees": {
-          const deg = Number(v.degrees ?? 15);
-          updateSprite((s) => ({ ...s, direction: (s.direction + deg) % 360 }));
+          const amount = Number(v.amount ?? 45);
+          const clockwise = String(v.direction ?? "clockwise") !== "counterclockwise";
+          const delta = clockwise ? amount : -amount;
+          updateSprite((s) => ({ ...s, direction: ((s.direction + delta) % 360 + 360) % 360 }));
           break;
         }
 

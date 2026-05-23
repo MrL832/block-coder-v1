@@ -119,6 +119,66 @@ export function BlockComponent({
 
             const currentValue = instance.values[inputDef.name] ?? inputDef.defaultValue;
 
+            if (inputDef.type === "direction") {
+              const isClockwise = String(currentValue) !== "counterclockwise";
+              return (
+                <span
+                  key={i}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{
+                    display: "inline-flex",
+                    borderRadius: "6px",
+                    overflow: "hidden",
+                    boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <button
+                    disabled={isPaletteItem}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isPaletteItem && onValueChange) onValueChange(inputDef.name, "clockwise");
+                    }}
+                    title="Clockwise"
+                    style={{
+                      background: isClockwise ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.3)",
+                      color: isClockwise ? "#1a1a1a" : "white",
+                      border: "none",
+                      padding: "2px 8px",
+                      fontWeight: 800,
+                      fontSize: "15px",
+                      cursor: isPaletteItem ? "default" : "pointer",
+                      lineHeight: 1,
+                      fontFamily: "Nunito, sans-serif",
+                    }}
+                  >
+                    ↻
+                  </button>
+                  <button
+                    disabled={isPaletteItem}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isPaletteItem && onValueChange) onValueChange(inputDef.name, "counterclockwise");
+                    }}
+                    title="Counterclockwise"
+                    style={{
+                      background: !isClockwise ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.3)",
+                      color: !isClockwise ? "#1a1a1a" : "white",
+                      border: "none",
+                      padding: "2px 8px",
+                      fontWeight: 800,
+                      fontSize: "15px",
+                      cursor: isPaletteItem ? "default" : "pointer",
+                      lineHeight: 1,
+                      fontFamily: "Nunito, sans-serif",
+                    }}
+                  >
+                    ↺
+                  </button>
+                </span>
+              );
+            }
+
             if (inputDef.type === "dropdown") {
               return (
                 <select

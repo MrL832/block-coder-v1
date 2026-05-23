@@ -27,7 +27,7 @@ export interface BlockDef {
 
 export interface BlockInputDef {
   name: string;
-  type: "number" | "text" | "dropdown";
+  type: "number" | "text" | "dropdown" | "direction";
   defaultValue: string | number;
   options?: string[];
 }
@@ -70,8 +70,11 @@ export const BLOCK_CATALOG: BlockDef[] = [
   {
     type: "motion_turndegrees",
     category: "Motion",
-    label: "Turn {degrees} degrees",
-    inputs: [{ name: "degrees", type: "number", defaultValue: 15 }],
+    label: "Turn {direction} {amount}",
+    inputs: [
+      { name: "direction", type: "direction", defaultValue: "clockwise" },
+      { name: "amount", type: "number", defaultValue: 45 },
+    ],
   },
   {
     type: "motion_gotoxy",
