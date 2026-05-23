@@ -64,13 +64,13 @@ export function BlockComponent({
     background: "rgba(255,255,255,0.85)",
     border: "none",
     borderRadius: "6px",
-    padding: "1px 6px",
+    padding: "2px 8px",
     fontWeight: 700,
     color: "#1a1a1a",
-    minWidth: "36px",
+    minWidth: "44px",
     width: "auto",
     fontFamily: "Nunito, sans-serif",
-    fontSize: "13px",
+    fontSize: "15px",
     outline: "none",
     boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2)",
     display: "inline-block",
@@ -103,8 +103,8 @@ export function BlockComponent({
         )}
 
         <div
-          className="flex flex-wrap items-center gap-1 px-3 py-2 flex-1 min-h-[40px]"
-          style={{ fontSize: "13px", fontWeight: 700, color: "white" }}
+          className="flex flex-wrap items-center gap-2 px-4 py-3 flex-1 min-h-[52px]"
+          style={{ fontSize: "15px", fontWeight: 700, color: "white" }}
         >
           {parts.map((part, i) => {
             if (part.type === "text") {
@@ -144,9 +144,9 @@ export function BlockComponent({
                       background: isClockwise ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.3)",
                       color: isClockwise ? "#1a1a1a" : "white",
                       border: "none",
-                      padding: "2px 8px",
+                      padding: "3px 10px",
                       fontWeight: 800,
-                      fontSize: "15px",
+                      fontSize: "18px",
                       cursor: isPaletteItem ? "default" : "pointer",
                       lineHeight: 1,
                       fontFamily: "Nunito, sans-serif",
@@ -165,9 +165,9 @@ export function BlockComponent({
                       background: !isClockwise ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.3)",
                       color: !isClockwise ? "#1a1a1a" : "white",
                       border: "none",
-                      padding: "2px 8px",
+                      padding: "3px 10px",
                       fontWeight: 800,
-                      fontSize: "15px",
+                      fontSize: "18px",
                       cursor: isPaletteItem ? "default" : "pointer",
                       lineHeight: 1,
                       fontFamily: "Nunito, sans-serif",
