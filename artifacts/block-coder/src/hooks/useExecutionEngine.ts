@@ -20,6 +20,11 @@ export function useExecutionEngine() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const cancelFnsRef = useRef(new Set<() => void>());
 
+  const toFiniteNumber = useCallback((raw: unknown, fallback: number) => {
+    const n = typeof raw === "number" ? raw : Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+  }, []);
+
   const updateSprite = useCallback((updater: (s: SpriteState) => SpriteState) => {
     setSpriteState((prev) => {
       const next = updater(prev);
@@ -35,7 +40,13 @@ export function useExecutionEngine() {
 
   const sleep = useCallback((ms: number): Promise<void> => {
     const signal = abortControllerRef.current?.signal;
+    const targetMs = Number.isFinite(ms) && ms > 0 ? ms : 0;
     return new Promise((resolve, reject) => {
+      if (targetMs === 0) {
+        resolve();
+        return;
+      }
+
       let done = false;
       let elapsed = 0;
       let intervalId = 0;
@@ -74,7 +85,7 @@ export function useExecutionEngine() {
         }
 
         elapsed += 50;
-        if (elapsed >= ms) {
+        if (elapsed >= targetMs) {
           window.clearInterval(intervalId);
           cleanup();
           resolve();
@@ -157,18 +168,20 @@ export function useExecutionEngine() {
             break;
 
           case "motion_movesteps": {
-            const steps = Number(v.steps ?? 10);
+            const steps = toFiniteNumber(v.steps, 10);
             updateSprite((s) => {
               const rad = ((s.direction - 90) * Math.PI) / 180;
-              const newX = Math.max(-240, Math.min(240, s.x + steps * Math.cos(rad)));
-              const newY = Math.max(-180, Math.min(180, s.y + steps * Math.sin(rad)));
+              const nextX = s.x + steps * Math.cos(rad);
+              const nextY = s.y + steps * Math.sin(rad);
+              const newX = Number.isFinite(nextX) ? Math.max(-240, Math.min(240, nextX)) : s.x;
+              const newY = Number.isFinite(nextY) ? Math.max(-180, Math.min(180, nextY)) : s.y;
               return { ...s, x: newX, y: newY };
             });
             break;
           }
 
           case "motion_turndegrees": {
-            const amount = Number(v.amount ?? 45);
+            const amount = toFiniteNumber(v.amount, 45);
             const clockwise = String(v.direction ?? "clockwise") !== "counterclockwise";
             const delta = clockwise ? amount : -amount;
             updateSprite((s) => ({ ...s, direction: ((s.direction + delta) % 360 + 360) % 360 }));
@@ -176,16 +189,16 @@ export function useExecutionEngine() {
           }
 
           case "motion_gotoxy": {
-            const x = Number(v.x ?? 0);
-            const y = Number(v.y ?? 0);
+            const x = toFiniteNumber(v.x, 0);
+            const y = toFiniteNumber(v.y, 0);
             updateSprite((s) => ({ ...s, x, y }));
             break;
           }
 
           case "motion_glidesecstoxy": {
-            const secs = Number(v.secs ?? 1);
-            const toX = Number(v.x ?? 0);
-            const toY = Number(v.y ?? 0);
+            const secs = toFiniteNumber(v.secs, 1);
+            const toX = toFiniteNumber(v.x, 0);
+            const toY = toFiniteNumber(v.y, 0);
             const cur = spriteRef.current;
             await glide(cur.x, cur.y, toX, toY, secs * 1000);
             break;
@@ -193,7 +206,7 @@ export function useExecutionEngine() {
 
           case "looks_sayforsecs": {
             const text = String(v.text ?? "Hello!");
-            const secs = Number(v.secs ?? 2);
+            const secs = toFiniteNumber(v.secs, 2);
             updateSprite((s) => ({ ...s, speech: text }));
             await sleep(secs * 1000);
             updateSprite((s) => ({ ...s, speech: null }));
@@ -201,19 +214,19 @@ export function useExecutionEngine() {
           }
 
           case "looks_setcoloreffectto": {
-            const value = Number(v.value ?? 50);
+            const value = toFiniteNumber(v.value, 50);
             updateSprite((s) => ({ ...s, colorEffect: value % 360 }));
             break;
           }
 
           case "control_waitsecs": {
-            const secs = Number(v.secs ?? 1);
+            const secs = toFiniteNumber(v.secs, 1);
             await sleep(secs * 1000);
             break;
           }
 
           case "control_repeat": {
-            const times = Number(v.times ?? 10);
+            const times = toFiniteNumber(v.times, 10);
             for (let i = 0; i < times; i++) {
               if (abortRef.current) return;
               await exec(block.children ?? []);
@@ -247,7 +260,7 @@ export function useExecutionEngine() {
         }
       }
     },
-    [glide, sleep, updateSprite]
+    [glide, sleep, toFiniteNumber, updateSprite]
   );
 
   const runScript = useCallback(
