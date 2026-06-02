@@ -17,8 +17,8 @@ export function useExecutionEngine() {
   const abortRef = useRef(false);
   const runIdRef = useRef(0);
   const spriteRef = useRef<SpriteState>({ ...INITIAL_SPRITE });
-  const intervalsRef = useRef<number[]>([]);
-  const rafRef = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const cancelFnsRef = useRef(new Set<() => void>());
 
   const updateSprite = useCallback((updater: (s: SpriteState) => SpriteState) => {
     setSpriteState((prev) => {
@@ -28,30 +28,58 @@ export function useExecutionEngine() {
     });
   }, []);
 
-  const clearAsync = useCallback(() => {
-    for (const id of intervalsRef.current) window.clearInterval(id);
-    intervalsRef.current = [];
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
+  const cancelPending = useCallback(() => {
+    for (const cancel of cancelFnsRef.current) cancel();
+    cancelFnsRef.current.clear();
   }, []);
 
   const sleep = useCallback((ms: number): Promise<void> => {
-    const runId = runIdRef.current;
+    const signal = abortControllerRef.current?.signal;
     return new Promise((resolve, reject) => {
+      let done = false;
       let elapsed = 0;
-      const interval = window.setInterval(() => {
+      let intervalId = 0;
+
+      const cleanup = () => {
+        if (done) return;
+        done = true;
+        if (signal) signal.removeEventListener("abort", onAbort);
+        cancelFnsRef.current.delete(cancel);
+      };
+
+      const onAbort = () => {
+        window.clearInterval(intervalId);
+        cleanup();
+        reject(new Error("aborted"));
+      };
+
+      const cancel = () => {
+        window.clearInterval(intervalId);
+        cleanup();
+        reject(new Error("aborted"));
+      };
+
+      if (signal?.aborted || abortRef.current) {
+        onAbort();
+        return;
+      }
+
+      if (signal) signal.addEventListener("abort", onAbort, { once: true });
+      cancelFnsRef.current.add(cancel);
+
+      intervalId = window.setInterval(() => {
+        if (signal?.aborted || abortRef.current) {
+          onAbort();
+          return;
+        }
+
         elapsed += 50;
-        if (abortRef.current || runIdRef.current !== runId) {
-          window.clearInterval(interval);
-          reject(new Error("aborted"));
-        } else if (elapsed >= ms) {
-          window.clearInterval(interval);
+        if (elapsed >= ms) {
+          window.clearInterval(intervalId);
+          cleanup();
           resolve();
         }
       }, 50);
-      intervalsRef.current.push(interval);
     });
   }, []);
 
@@ -62,13 +90,43 @@ export function useExecutionEngine() {
     toY: number,
     durationMs: number
   ): Promise<void> => {
-    const runId = runIdRef.current;
+    const signal = abortControllerRef.current?.signal;
     const dur = Number.isFinite(durationMs) && durationMs > 0 ? durationMs : 0;
     return new Promise((resolve, reject) => {
+      let done = false;
       const start = performance.now();
+      let rafId = 0;
+
+      const cleanup = () => {
+        if (done) return;
+        done = true;
+        if (signal) signal.removeEventListener("abort", onAbort);
+        cancelFnsRef.current.delete(cancel);
+      };
+
+      const onAbort = () => {
+        cancelAnimationFrame(rafId);
+        cleanup();
+        reject(new Error("aborted"));
+      };
+
+      const cancel = () => {
+        cancelAnimationFrame(rafId);
+        cleanup();
+        reject(new Error("aborted"));
+      };
+
+      if (signal?.aborted || abortRef.current) {
+        onAbort();
+        return;
+      }
+
+      if (signal) signal.addEventListener("abort", onAbort, { once: true });
+      cancelFnsRef.current.add(cancel);
+
       const tick = () => {
-        if (abortRef.current || runIdRef.current !== runId) {
-          reject(new Error("aborted"));
+        if (signal?.aborted || abortRef.current) {
+          onAbort();
           return;
         }
         const now = performance.now();
@@ -77,13 +135,13 @@ export function useExecutionEngine() {
         const y = fromY + (toY - fromY) * progress;
         updateSprite((s) => ({ ...s, x, y }));
         if (progress < 1) {
-          rafRef.current = requestAnimationFrame(tick);
+          rafId = requestAnimationFrame(tick);
         } else {
-          rafRef.current = null;
+          cleanup();
           resolve();
         }
       };
-      rafRef.current = requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(tick);
     });
   }, [updateSprite]);
 
@@ -195,11 +253,13 @@ export function useExecutionEngine() {
   const runScript = useCallback(
     async (blocks: BlockInstance[]) => {
       if (isRunningRef.current) return;
+      abortControllerRef.current?.abort();
+      cancelPending();
       isRunningRef.current = true;
       abortRef.current = false;
-      clearAsync();
       const myRunId = runIdRef.current + 1;
       runIdRef.current = myRunId;
+      abortControllerRef.current = new AbortController();
       spriteRef.current = { ...INITIAL_SPRITE };
       setSpriteState({ ...INITIAL_SPRITE });
       setIsRunning(true);
@@ -207,6 +267,8 @@ export function useExecutionEngine() {
       const flagBlock = blocks.find((b) => b.type === "event_whenflagclicked");
       if (!flagBlock) {
         isRunningRef.current = false;
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
         setIsRunning(false);
         return;
       }
@@ -218,36 +280,42 @@ export function useExecutionEngine() {
         await executeBlocks(toRun);
       } catch {
       } finally {
+        isRunningRef.current = false;
         if (runIdRef.current === myRunId) {
-          isRunningRef.current = false;
           abortRef.current = false;
-          clearAsync();
+          abortControllerRef.current?.abort();
+          abortControllerRef.current = null;
+          cancelPending();
           setIsRunning(false);
         }
       }
     },
-    [clearAsync, executeBlocks]
+    [cancelPending, executeBlocks]
   );
 
   const stopExecution = useCallback(() => {
     abortRef.current = true;
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    cancelPending();
     isRunningRef.current = false;
     runIdRef.current += 1;
-    clearAsync();
     spriteRef.current = { ...INITIAL_SPRITE };
     setSpriteState({ ...INITIAL_SPRITE });
     setIsRunning(false);
-  }, [clearAsync]);
+  }, [cancelPending]);
 
   const resetSprite = useCallback(() => {
     abortRef.current = true;
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    cancelPending();
     isRunningRef.current = false;
     runIdRef.current += 1;
-    clearAsync();
     spriteRef.current = { ...INITIAL_SPRITE };
     setSpriteState({ ...INITIAL_SPRITE });
     setIsRunning(false);
-  }, [clearAsync]);
+  }, [cancelPending]);
 
   return { spriteState, runScript, stopExecution, resetSprite, isRunning };
 }
